@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">MovieDB</string>
+    <string name="movie_poster">Movie poster</string>
+    <string name="title">Title</string>
+    <string name="release_date">Release Date</string>
+    <string name="average_vote">Average Vote</string>
+    <string name="sort_order">Sort Order</string>
+
+    <string-array name="sort_order_array">
+        <item>Popularity</item>
+        <item>Top Rated</item>
+    </string-array>
+</resources>
