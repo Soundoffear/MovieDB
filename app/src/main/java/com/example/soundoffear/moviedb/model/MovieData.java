@@ -13,13 +13,15 @@ public class MovieData implements Serializable {
     private String moviePoster;
     private String avgVote;
     private String moviePlot;
+    private String movieID;
 
-    public MovieData(String titleMovie, String releaseDate, String moviePoster, String avgVote, String moviePlot) {
+    public MovieData(String titleMovie, String releaseDate, String moviePoster, String avgVote, String moviePlot, String movieID) {
         this.titleMovie = titleMovie;
         this.releaseDate = releaseDate;
         this.moviePoster = moviePoster;
         this.avgVote = avgVote;
         this.moviePlot = moviePlot;
+        this.movieID = movieID;
     }
 
     public String getTitleMovie() {
@@ -40,5 +42,9 @@ public class MovieData implements Serializable {
 
     public String getMoviePlot() {
         return moviePlot;
+    }
+
+    public String getMovieID() {
+        return movieID;
     }
 }

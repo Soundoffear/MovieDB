@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -8,102 +8,133 @@
     tools:context="com.example.soundoffear.moviedb.MovieDetailActivity">
 
     <android.support.constraint.ConstraintLayout
+        android:id="@+id/detail_const_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp">
+        android:layout_margin="0dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toTopOf="@+id/detail_tab_const_layout"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/detail_fav_image_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="8dp"
+            android:tint="@color/colorWhite"
+            android:background="#0000"
+            android:contentDescription="@string/fav"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:src="@drawable/ic_favorite_black_24dp" />
 
         <ImageView
             android:id="@+id/detail_movie_poster"
-            android:layout_width="200dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="@string/movie_poster"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/detail_title_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
             android:text="@string/title"
-            android:textStyle="bold"
+            android:textColor="@android:color/white"
             android:textSize="18sp"
+            android:textStyle="bold"
             app:layout_constraintLeft_toRightOf="@+id/detail_movie_poster"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/detail_title_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            tools:text="@string/title"
             android:layout_marginTop="4dp"
+            android:textColor="@android:color/white"
             android:textSize="16sp"
             app:layout_constraintLeft_toLeftOf="@+id/detail_title_label"
             app:layout_constraintRight_toRightOf="@+id/detail_title_label"
-            app:layout_constraintTop_toBottomOf="@+id/detail_title_label"/>
+            app:layout_constraintTop_toBottomOf="@+id/detail_title_label"
+            tools:text="@string/title" />
 
         <TextView
             android:id="@+id/detail_release_date_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:text="@string/release_date"
             android:layout_marginTop="16dp"
+            android:text="@string/release_date"
+            android:textColor="@android:color/white"
             android:textSize="18sp"
             app:layout_constraintLeft_toLeftOf="@+id/detail_title_label"
             app:layout_constraintRight_toRightOf="@+id/detail_title_label"
-            app:layout_constraintTop_toBottomOf="@+id/detail_title_value"/>
+            app:layout_constraintTop_toBottomOf="@+id/detail_title_value" />
 
         <TextView
             android:id="@+id/detail_release_date_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:text="@string/release_date"
             android:layout_marginTop="4dp"
+            android:text="@string/release_date"
+            android:textColor="@android:color/white"
             android:textSize="16sp"
             app:layout_constraintLeft_toLeftOf="@+id/detail_title_label"
             app:layout_constraintRight_toRightOf="@+id/detail_title_label"
-            app:layout_constraintTop_toBottomOf="@+id/detail_release_date_label"/>
+            app:layout_constraintTop_toBottomOf="@+id/detail_release_date_label" />
 
         <TextView
             android:id="@+id/detail_vote_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:text="@string/average_vote"
             android:layout_marginTop="16dp"
+            android:text="@string/average_vote"
+            android:textColor="@android:color/white"
             android:textSize="18sp"
             app:layout_constraintLeft_toLeftOf="@+id/detail_title_label"
             app:layout_constraintRight_toRightOf="@+id/detail_title_label"
-            app:layout_constraintTop_toBottomOf="@+id/detail_release_date_value"/>
+            app:layout_constraintTop_toBottomOf="@+id/detail_release_date_value" />
 
         <TextView
             android:id="@+id/detail_vote_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:text="@string/average_vote"
             android:layout_marginTop="4dp"
+            android:text="@string/average_vote"
+            android:textColor="@android:color/white"
             android:textSize="16sp"
             app:layout_constraintLeft_toLeftOf="@+id/detail_title_label"
             app:layout_constraintRight_toRightOf="@+id/detail_title_label"
-            app:layout_constraintTop_toBottomOf="@+id/detail_vote_label"/>
-
-        <TextView
-            android:id="@+id/detail_plot"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="14sp"
-            android:layout_marginTop="8dp"
-            tools:text="plot plot plot plot plot plot"
-            app:layout_constraintTop_toBottomOf="@+id/detail_movie_poster"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"/>
+            app:layout_constraintTop_toBottomOf="@+id/detail_vote_label" />
 
     </android.support.constraint.ConstraintLayout>
 
-</ScrollView>
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/detail_tab_const_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_margin="5dp"
+        android:layout_weight="1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/detail_const_layout">
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/detail_tabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabSelectedTextColor="#FFFFFF"
+            app:tabTextColor="#FFFFFF" />
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/detail_viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/detail_tabLayout" />
+
+    </android.support.constraint.ConstraintLayout>
+
+
+</android.support.constraint.ConstraintLayout>
