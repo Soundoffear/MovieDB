@@ -16,7 +16,7 @@ public class NetworkUtilities {
     private static final String MOVIE_DB_URL_TOP = "https://api.themoviedb.org/3/movie/top_rated?api_key=";
     private static final String IMAGE_DB_URL = "https://image.tmdb.org/t/p/";
 
-    private static final String API_KEY = "xxxxxxxxxxxxxx";
+    private static final String API_KEY = "xxxxxxxx";
 
     //private static final String IMAGE_SIZE = "w185";
     private static final String IMAGE_SIZE_500 = "w500";

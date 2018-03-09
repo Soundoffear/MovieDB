@@ -8,9 +8,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
@@ -41,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
     ArrayList<MovieDataSaR> movieDataSaRList = new ArrayList<>();
 
     private static final String PARCELABLE_KEY_STATE = "state_key";
+    private static final String SCROLL_STATE = "scroll_state";
     private String lastSortOrder;
 
     @Override
@@ -73,6 +76,10 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         restartRecyclerView(savedInstanceState);
+        if(savedInstanceState != null) {
+            Parcelable restoredScroll = savedInstanceState.getParcelable(SCROLL_STATE);
+            imagesGrid.getLayoutManager().onRestoreInstanceState(restoredScroll);
+        }
         super.onRestoreInstanceState(savedInstanceState);
     }
 
@@ -81,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
         lastSortOrder = getSortOrderFromPreferences();
         outState.clear();
         outState.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
+        outState.putParcelable(SCROLL_STATE, imagesGrid.getLayoutManager().onSaveInstanceState());
         super.onSaveInstanceState(outState);
     }
 
@@ -258,6 +266,7 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
         super.onPause();
         Bundle savedData = new Bundle();
         savedData.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
+        savedData.putParcelable(SCROLL_STATE, imagesGrid.getLayoutManager().onSaveInstanceState());
         movieDataSaRList.clear();
         getIntent().putExtras(savedData);
     }
@@ -269,6 +278,7 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
         movieDataSaRList.clear();
         Bundle restoredData = getIntent().getExtras();
         if (restoredData != null) {
+            imagesGrid.getLayoutManager().onRestoreInstanceState(restoredData.getParcelable(SCROLL_STATE));
             restartRecyclerView(restoredData);
         }
     }
