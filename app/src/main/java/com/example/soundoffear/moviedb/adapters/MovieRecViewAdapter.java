@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import com.example.soundoffear.moviedb.R;
 import com.example.soundoffear.moviedb.interfaces.OnClickRecView;
 import com.example.soundoffear.moviedb.model.ImageData;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.io.FileInputStream;
@@ -26,12 +27,14 @@ public class MovieRecViewAdapter extends RecyclerView.Adapter<MovieRecViewAdapte
     private Context context;
     private static OnClickRecView onClickRecView;
     private boolean isNetwork;
+    private String order;
 
-    public MovieRecViewAdapter(Context _context, List<ImageData> imageDataList, OnClickRecView _onClickRecView, boolean isNetwork) {
+    public MovieRecViewAdapter(Context _context, List<ImageData> imageDataList, OnClickRecView _onClickRecView, boolean isNetwork, String order) {
         this.imageDataList = imageDataList;
         this.context = _context;
         onClickRecView = _onClickRecView;
         this.isNetwork = isNetwork;
+        this.order = order;
     }
 
     @Override
@@ -63,29 +66,44 @@ public class MovieRecViewAdapter extends RecyclerView.Adapter<MovieRecViewAdapte
         for(int i = 0;i < imageDataList.size(); i++) {
             for(int j = 0; j < imageDataList.get(i).getMovieID().size(); j++) {
                 if (imageDataList.get(i).getMovieID().get(j).equals(dbMovieID)) {
+                    favImageDisc(holder, imageDataList.get(j).getImageName());
                     holder.favImgView.setColorFilter(context.getResources().getColor(R.color.colorAccent));
                 }
             }
         }
     }
 
-    private void populateWithOutNetwork(MovieRecViewHolder holder, int position) {
+    private void favImageDisc(MovieRecViewHolder holder, String imageName) {
         try {
-            FileInputStream fileInputStream = context.openFileInput(imageDataList.get(position).getImageName());
-            Bitmap imageBitmap = BitmapFactory.decodeStream(fileInputStream);
-
-            holder.movieImgView.setImageBitmap(imageBitmap);
-
-            for(int i = 0;i < imageDataList.size(); i++) {
-                for(int j = 0; j < imageDataList.get(i).getMovieID().size(); j++) {
-                    if (imageDataList.get(i).getMovieID().get(j).equals(imageDataList.get(position).getImageID())) {
-                        holder.favImgView.setColorFilter(context.getResources().getColor(R.color.colorAccent));
-                    }
-                }
-            }
-
+            FileInputStream fileInputStream = context.openFileInput(imageName);
+            Bitmap imageBitMap = BitmapFactory.decodeStream(fileInputStream);
+            holder.movieImgView.setImageBitmap(imageBitMap);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void populateWithOutNetwork(MovieRecViewHolder holder, int position) {
+        if(!order.equals("Favorites")) {
+            Picasso.with(context).load(imageDataList.get(position).getImageURL()).networkPolicy(NetworkPolicy.OFFLINE).into(holder.movieImgView);
+        } else {
+            try {
+                FileInputStream fileInputStream = context.openFileInput(imageDataList.get(position).getImageName());
+                Bitmap imageBitmap = BitmapFactory.decodeStream(fileInputStream);
+
+                holder.movieImgView.setImageBitmap(imageBitmap);
+
+                for (int i = 0; i < imageDataList.size(); i++) {
+                    for (int j = 0; j < imageDataList.get(i).getMovieID().size(); j++) {
+                        if (imageDataList.get(i).getMovieID().get(j).equals(imageDataList.get(position).getImageID())) {
+                            holder.favImgView.setColorFilter(context.getResources().getColor(R.color.colorAccent));
+                        }
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

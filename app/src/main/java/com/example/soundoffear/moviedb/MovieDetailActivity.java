@@ -179,6 +179,8 @@ public class MovieDetailActivity extends AppCompatActivity {
                     String movieIDcursor = cursor.getString(cursor.getColumnIndex(FavouritesContract.FavouritesEntry.MOVIE_ID));
                     if (movieIDcursor.equals(movieID)) {
                         fav_image_button.setColorFilter(getResources().getColor(R.color.colorAccent));
+                        movie_poster.setImageBitmap(imageFromStorage(movieData.getMoviePoster().replace('/',' ')));
+                        Log.d("MOVIE IMG", movieData.getMoviePoster().replace('/', ' '));
                         isFav = true;
                     }
 

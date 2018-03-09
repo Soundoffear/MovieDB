@@ -24,6 +24,7 @@ import com.example.soundoffear.moviedb.interfaces.OnClickRecView;
 import com.example.soundoffear.moviedb.model.ImageData;
 import com.example.soundoffear.moviedb.model.MovieData;
 import com.example.soundoffear.moviedb.utilities.JSONUtilities;
+import com.example.soundoffear.moviedb.utilities.MovieDataSaR;
 import com.example.soundoffear.moviedb.utilities.NetworkUtilities;
 
 import java.io.IOException;
@@ -37,12 +38,15 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
     List<MovieData> movieDataList;
     List<ImageData> imageDataList;
     MovieRecViewAdapter movieRecViewAdapter;
+    ArrayList<MovieDataSaR> movieDataSaRList = new ArrayList<>();
+
+    private static final String PARCELABLE_KEY_STATE = "state_key";
+    private String lastSortOrder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         movieDataList = new ArrayList<>();
         imageDataList = new ArrayList<>();
 
@@ -52,16 +56,32 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getApplicationContext(), 2);
         imagesGrid.setLayoutManager(gridLayoutManager);
 
-        movieRecViewAdapter = new MovieRecViewAdapter(getApplicationContext(), imageDataList, this, isNetworkOn());
+        movieRecViewAdapter = new MovieRecViewAdapter(getApplicationContext(), imageDataList, this, isNetworkOn(), getSortOrderFromPreferences());
 
         imagesGrid.setAdapter(movieRecViewAdapter);
 
         if (isNetworkOn()) {
             new RunAsyncConnection().execute();
+            Log.d("NETWORK", "ON");
         } else {
             getFavoriteMovies();
+            Log.d("NETWORK", "OFF");
         }
 
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        restartRecyclerView(savedInstanceState);
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        lastSortOrder = getSortOrderFromPreferences();
+        outState.clear();
+        outState.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
+        super.onSaveInstanceState(outState);
     }
 
     private boolean isNetworkOn() {
@@ -105,18 +125,19 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
         protected String doInBackground(String... strings) {
             String jsonString;
             try {
-                if(!getSortOrderFromPreferences().equals("Favorites")) {
-                    jsonString = NetworkUtilities.downloadJSON(NetworkUtilities.buildURL(getSortOrderFromPreferences()));
-
-                    movieDataList.clear();
-                    imageDataList.clear();
-                    movieDataList = JSONUtilities.allMoviesData(jsonString);
-                    if (movieDataList.size() > 0) {
-                        for (int i = 0; i < movieDataList.size(); i++) {
-                            URL stringURL = NetworkUtilities.buildImageURL(movieDataList.get(i).getMoviePoster());
-                            ImageData imageData = new ImageData(stringURL.toString(), movieDataList.get(i).getMovieID(), movieID(), null);
-                            imageDataList.add(imageData);
-                        }
+                jsonString = NetworkUtilities.downloadJSON(NetworkUtilities.buildURL(getSortOrderFromPreferences()));
+                movieDataList.clear();
+                imageDataList.clear();
+                if(getSortOrderFromPreferences().equals("Favorites")) {
+                    getFavoriteMovies();
+                }
+                List<MovieData> fromJSONdata = JSONUtilities.allMoviesData(jsonString);
+                if (fromJSONdata.size() > 0) {
+                    for (int i = 0; i < fromJSONdata.size(); i++) {
+                        URL stringURL = NetworkUtilities.buildImageURL(fromJSONdata.get(i).getMoviePoster());
+                        ImageData imageData = new ImageData(stringURL.toString(), JSONUtilities.allMoviesData(jsonString).get(i).getMovieID(), movieID(), null);
+                        movieDataList.add(JSONUtilities.allMoviesData(jsonString).get(i));
+                        imageDataList.add(imageData);
                     }
                 }
             } catch (IOException e) {
@@ -130,18 +151,28 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
 
+            for (int i = 0; i < movieDataList.size(); i++) {
+                Log.d("MOVIE", movieDataList.get(i).getTitleMovie());
+            }
+
             movieRecViewAdapter = new MovieRecViewAdapter(getApplicationContext(), imageDataList, new OnClickRecView() {
                 @Override
                 public void onRecyclerViewClick(int position) {
-                    String title = movieDataList.get(position).getTitleMovie();
-                    Log.d("MOVIE TITLE", title);
-
                     Intent intent = new Intent(MainActivity.this, MovieDetailActivity.class);
 
                     intent.putExtra(MOVIE_DETAIL, movieDataList.get(position));
                     startActivity(intent);
                 }
-            }, isNetworkOn());
+            }, isNetworkOn(),
+                    getSortOrderFromPreferences());
+            movieDataSaRList = new ArrayList<>();
+            movieDataSaRList.clear();
+            for (int i = 0; i < imageDataList.size(); i++) {
+                String movieURL = imageDataList.get(i).getImageURL();
+                String movieID = imageDataList.get(i).getImageID();
+                String movieName = imageDataList.get(i).getImageName();
+                movieDataSaRList.add(new MovieDataSaR(movieURL, movieID, movieName, movieID()));
+            }
             imagesGrid.setAdapter(movieRecViewAdapter);
         }
     }
@@ -161,6 +192,8 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
                         cursor.getString(cursor.getColumnIndex(FavouritesContract.FavouritesEntry.MOVIE_POSTER)));
                 imageDataList.add(imageData);
 
+                Log.d("IMAGE FAV", imageData.getImageID());
+
                 MovieData movieData = new MovieData(cursor.getString(cursor.getColumnIndex(FavouritesContract.FavouritesEntry.MOVIE_TITLE)),
                         cursor.getString(cursor.getColumnIndex(FavouritesContract.FavouritesEntry.MOVIE_DATE)),
                         cursor.getString(cursor.getColumnIndex(FavouritesContract.FavouritesEntry.MOVIE_POSTER)),
@@ -174,15 +207,14 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
             movieRecViewAdapter = new MovieRecViewAdapter(this, imageDataList, new OnClickRecView() {
                 @Override
                 public void onRecyclerViewClick(int position) {
-                    String title = imageDataList.get(position).getImageName();
-                    Log.d("MOVIE TITLE", title + " going offline");
 
                     Intent intent = new Intent(MainActivity.this, MovieDetailActivity.class);
 
                     intent.putExtra(MOVIE_DETAIL, movieDataList.get(position));
                     startActivity(intent);
                 }
-            }, isNetworkOn());
+            }, isNetworkOn(),
+                    getSortOrderFromPreferences());
         }
     }
 
@@ -212,10 +244,59 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
     @Override
     protected void onRestart() {
         super.onRestart();
-        if(isNetworkOn()) {
-            new RunAsyncConnection().execute();
-        } else {
-            getFavoriteMovies();
+        if (!lastSortOrder.equals(getSortOrderFromPreferences())) {
+            if (isNetworkOn()) {
+                new RunAsyncConnection().execute();
+            } else {
+                getFavoriteMovies();
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Bundle savedData = new Bundle();
+        savedData.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
+        movieDataSaRList.clear();
+        getIntent().putExtras(savedData);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        movieDataSaRList = new ArrayList<>();
+        movieDataSaRList.clear();
+        Bundle restoredData = getIntent().getExtras();
+        if (restoredData != null) {
+            restartRecyclerView(restoredData);
+        }
+    }
+
+    private void restartRecyclerView(Bundle restoredData) {
+        movieDataSaRList = restoredData.getParcelableArrayList(PARCELABLE_KEY_STATE);
+        if (movieDataSaRList != null) {
+            for (int i = 0; i < movieDataSaRList.size(); i++) {
+                ImageData imageData = new ImageData(movieDataSaRList.get(i).getImageURL(),
+                        movieDataSaRList.get(i).getImageID(),
+                        movieID(),
+                        movieDataSaRList.get(i).getImageName());
+                imageDataList.add(imageData);
+            }
+            movieRecViewAdapter = new MovieRecViewAdapter(this,
+                    imageDataList,
+                    new OnClickRecView() {
+                        @Override
+                        public void onRecyclerViewClick(int position) {
+                            Intent intent = new Intent(MainActivity.this, MovieDetailActivity.class);
+
+                            intent.putExtra(MOVIE_DETAIL, movieDataList.get(position));
+                            startActivity(intent);
+                        }
+                    },
+                    isNetworkOn(),
+                    getSortOrderFromPreferences());
+            imagesGrid.setAdapter(movieRecViewAdapter);
         }
     }
 }
