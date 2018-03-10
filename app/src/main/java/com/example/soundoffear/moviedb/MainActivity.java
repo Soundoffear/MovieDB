@@ -12,7 +12,6 @@ import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
@@ -26,7 +25,7 @@ import com.example.soundoffear.moviedb.interfaces.OnClickRecView;
 import com.example.soundoffear.moviedb.model.ImageData;
 import com.example.soundoffear.moviedb.model.MovieData;
 import com.example.soundoffear.moviedb.utilities.JSONUtilities;
-import com.example.soundoffear.moviedb.utilities.MovieDataSaR;
+import com.example.soundoffear.moviedb.model.MovieDataSaR;
 import com.example.soundoffear.moviedb.utilities.NetworkUtilities;
 
 import java.io.IOException;
@@ -64,31 +63,55 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
 
         imagesGrid.setAdapter(movieRecViewAdapter);
 
-        if(savedInstanceState != null) {
+        if (savedInstanceState != null) {
             Parcelable restoredScroll = savedInstanceState.getParcelable(SCROLL_STATE);
             imagesGrid.getLayoutManager().onRestoreInstanceState(restoredScroll);
-            Log.d("STATE SAVED", "--------- STATE ------ SAVED ------");
-            restartRecyclerView(savedInstanceState);
+            movieRestoration(savedInstanceState);
 
         } else {
             if (isNetworkOn()) {
-                new RunAsyncConnection().execute();
+                if (getSortOrderFromPreferences().equals("Favorites")) {
+                    getFavoriteMovies();
+                } else {
+                    new RunAsyncConnection().execute();
+                }
                 Log.d("NETWORK", "ON");
             } else {
-
-                getFavoriteMovies();
                 Log.d("NETWORK", "OFF");
             }
         }
 
     }
 
+    private void movieRestoration(Bundle savedInstanceState) {
+        movieDataSaRList = savedInstanceState.getParcelableArrayList(PARCELABLE_KEY_STATE);
+        assert movieDataSaRList != null;
+        for (int i = 0; i < movieDataSaRList.size(); i++) {
+            imageDataList.add(new ImageData(movieDataSaRList.get(i).getImageURL(),
+                    movieDataSaRList.get(i).getImageID(),
+                    movieDataSaRList.get(i).getMovieID(),
+                    movieDataSaRList.get(i).getImageName()));
+            movieDataList.add(new MovieData(movieDataSaRList.get(i).getTitleMovie(),
+                    movieDataSaRList.get(i).getReleaseDate(),
+                    movieDataSaRList.get(i).getMoviePoster(),
+                    movieDataSaRList.get(i).getAvgVote(),
+                    movieDataSaRList.get(i).getMoviePlot(),
+                    movieDataSaRList.get(i).getImageID()));
+        }
+        movieRecViewAdapter = new MovieRecViewAdapter(this, imageDataList, new OnClickRecView() {
+            @Override
+            public void onRecyclerViewClick(int position) {
+                Intent intentToStartDetailActivity = new Intent(MainActivity.this, MovieDetailActivity.class);
+                intentToStartDetailActivity.putExtra(MOVIE_DETAIL, movieDataList.get(position));
+                startActivity(intentToStartDetailActivity);
+            }
+        }, isNetworkOn(), getSortOrderFromPreferences());
+    }
+
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        Log.d("onRestore", "------- onRestoreInstanceState ------");
-        restartRecyclerView(savedInstanceState);
-        if(savedInstanceState != null) {
+        if (savedInstanceState != null) {
             Parcelable restoredScroll = savedInstanceState.getParcelable(SCROLL_STATE);
             imagesGrid.getLayoutManager().onRestoreInstanceState(restoredScroll);
         }
@@ -98,9 +121,8 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         lastSortOrder = getSortOrderFromPreferences();
-        Log.d("MOVIE SAR saving", String.valueOf(movieDataSaRList.size()));
-        outState.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
         outState.putParcelable(SCROLL_STATE, imagesGrid.getLayoutManager().onSaveInstanceState());
+        outState.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
     }
 
     private boolean isNetworkOn() {
@@ -147,9 +169,6 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
                 jsonString = NetworkUtilities.downloadJSON(NetworkUtilities.buildURL(getSortOrderFromPreferences()));
                 movieDataList.clear();
                 imageDataList.clear();
-                if(getSortOrderFromPreferences().equals("Favorites")) {
-                    getFavoriteMovies();
-                }
                 List<MovieData> fromJSONdata = JSONUtilities.allMoviesData(jsonString);
                 if (fromJSONdata.size() > 0) {
                     for (int i = 0; i < fromJSONdata.size(); i++) {
@@ -169,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-
+            movieDataSaRList.clear();
             for (int i = 0; i < movieDataList.size(); i++) {
                 Log.d("MOVIE", movieDataList.get(i).getTitleMovie());
             }
@@ -188,13 +207,29 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
                 String movieURL = imageDataList.get(i).getImageURL();
                 String movieID = imageDataList.get(i).getImageID();
                 String movieName = imageDataList.get(i).getImageName();
-                movieDataSaRList.add(new MovieDataSaR(movieURL, movieID, movieName, movieID()));
+                String movieTitle = movieDataList.get(i).getTitleMovie();
+                String movieDate = movieDataList.get(i).getReleaseDate();
+                String moviePoster = movieDataList.get(i).getMoviePoster();
+                String movieAvgVote = movieDataList.get(i).getAvgVote();
+                String moviePlot = movieDataList.get(i).getMoviePlot();
+                movieDataSaRList.add(new MovieDataSaR(movieURL,
+                        movieID,
+                        movieName,
+                        movieID(),
+                        movieTitle,
+                        movieDate,
+                        moviePoster,
+                        movieAvgVote,
+                        moviePlot));
             }
             imagesGrid.setAdapter(movieRecViewAdapter);
         }
     }
 
     private void getFavoriteMovies() {
+        imageDataList.clear();
+        movieDataList.clear();
+        movieDataSaRList.clear();
         try {
             Cursor cursor = getContentResolver().query(FavouritesContentProvider.BASE_CONTENT_URI,
                     null,
@@ -216,6 +251,25 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
                         cursor.getString(cursor.getColumnIndex(FavouritesContract.FavouritesEntry.MOVIE_PLOT)),
                         cursor.getString(cursor.getColumnIndex(FavouritesContract.FavouritesEntry.MOVIE_ID)));
                 movieDataList.add(movieData);
+                for (int i = 0; i < imageDataList.size(); i++) {
+                    String movieURL = imageDataList.get(i).getImageURL();
+                    String movieID = imageDataList.get(i).getImageID();
+                    String movieName = imageDataList.get(i).getImageName();
+                    String movieTitle = movieDataList.get(i).getTitleMovie();
+                    String movieDate = movieDataList.get(i).getReleaseDate();
+                    String moviePoster = movieDataList.get(i).getMoviePoster();
+                    String movieAvgVote = movieDataList.get(i).getAvgVote();
+                    String moviePlot = movieDataList.get(i).getMoviePlot();
+                    movieDataSaRList.add(new MovieDataSaR(movieURL,
+                            movieID,
+                            movieName,
+                            movieID(),
+                            movieTitle,
+                            movieDate,
+                            moviePoster,
+                            movieAvgVote,
+                            moviePlot));
+                }
             }
             cursor.close();
         } finally {
@@ -230,6 +284,7 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
                 }
             }, isNetworkOn(),
                     getSortOrderFromPreferences());
+            imagesGrid.setAdapter(movieRecViewAdapter);
         }
     }
 
@@ -259,68 +314,35 @@ public class MainActivity extends AppCompatActivity implements OnClickRecView {
     @Override
     protected void onRestart() {
         super.onRestart();
-        Log.d("RESTART", "------- onRestart ------");
         if (!lastSortOrder.equals(getSortOrderFromPreferences())) {
             if (isNetworkOn()) {
-                new RunAsyncConnection().execute();
+                if(getSortOrderFromPreferences().equals("Favorites")) {
+                    getFavoriteMovies();
+                } else {
+                    new RunAsyncConnection().execute();
+                }
             } else {
                 getFavoriteMovies();
             }
-        } else {
-            restartRecyclerView(getIntent().getExtras());
         }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        Bundle savedData = new Bundle();
-        savedData.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
-        savedData.putParcelable(SCROLL_STATE, imagesGrid.getLayoutManager().onSaveInstanceState());
-        getIntent().putExtras(savedData);
+        Bundle stateBundle = new Bundle();
+        stateBundle.putParcelableArrayList(PARCELABLE_KEY_STATE, movieDataSaRList);
+        stateBundle.putParcelable(SCROLL_STATE, imagesGrid.getLayoutManager().onSaveInstanceState());
+        getIntent().putExtras(stateBundle);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d("RESUME", "------- onResume ------");
-        Bundle restoredData = getIntent().getExtras();
-        if (restoredData != null) {
-            imagesGrid.getLayoutManager().onRestoreInstanceState(restoredData.getParcelable(SCROLL_STATE));
-            restartRecyclerView(restoredData);
+        Bundle restoredBundle;
+        restoredBundle = getIntent().getExtras();
+        if (restoredBundle != null) {
+            imagesGrid.getLayoutManager().onRestoreInstanceState(restoredBundle.getParcelable(SCROLL_STATE));
         }
-    }
-
-    private void restartRecyclerView(Bundle restoredData) {
-        movieDataSaRList.clear();
-        movieDataSaRList = restoredData.getParcelableArrayList(PARCELABLE_KEY_STATE);
-        Log.d("MOVIE SAR restoring 1", String.valueOf(movieDataSaRList.size()));
-        if (movieDataSaRList != null) {
-            Log.d("Restoring", "------- ======== RESTORING ======= --------");
-            for (int i = 0; i < movieDataSaRList.size(); i++) {
-                ImageData imageData = new ImageData(movieDataSaRList.get(i).getImageURL(),
-                        movieDataSaRList.get(i).getImageID(),
-                        movieID(),
-                        movieDataSaRList.get(i).getImageName());
-                Log.d("TEST IMAGE DATA", imageData.getImageURL() + " _ " + imageData.getImageID());
-                imageDataList.add(imageData);
-            }
-            movieRecViewAdapter = new MovieRecViewAdapter(this,
-                    imageDataList,
-                    new OnClickRecView() {
-                        @Override
-                        public void onRecyclerViewClick(int position) {
-                            Intent intent = new Intent(MainActivity.this, MovieDetailActivity.class);
-
-                            intent.putExtra(MOVIE_DETAIL, movieDataList.get(position));
-                            startActivity(intent);
-                        }
-                    },
-                    isNetworkOn(),
-                    getSortOrderFromPreferences());
-            imagesGrid.setAdapter(movieRecViewAdapter);
-        }
-
-        Log.d("MOVIE SAR restoring 2", String.valueOf(movieDataSaRList.size()));
     }
 }

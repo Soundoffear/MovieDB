@@ -51,7 +51,11 @@ public class MovieRecViewAdapter extends RecyclerView.Adapter<MovieRecViewAdapte
     @Override
     public void onBindViewHolder(MovieRecViewHolder holder, int position) {
         if(isNetworkOn()) {
-            populateWithNetwork(holder, position);
+            if(order.equals("Favorites")) {
+                populateWithOutNetwork(holder, position);
+            } else {
+                populateWithNetwork(holder, position);
+            }
         } else {
             populateWithOutNetwork(holder, position);
         }
@@ -74,27 +78,15 @@ public class MovieRecViewAdapter extends RecyclerView.Adapter<MovieRecViewAdapte
         for(int i = 0;i < imageDataList.size(); i++) {
             for(int j = 0; j < imageDataList.get(i).getMovieID().size(); j++) {
                 if (imageDataList.get(i).getMovieID().get(j).equals(dbMovieID)) {
-                    favImageDisc(holder, imageDataList.get(j).getImageName());
                     holder.favImgView.setColorFilter(context.getResources().getColor(R.color.colorAccent));
                 }
             }
         }
     }
 
-    private void favImageDisc(MovieRecViewHolder holder, String imageName) {
-        try {
-            FileInputStream fileInputStream = context.openFileInput(imageName);
-            Bitmap imageBitMap = BitmapFactory.decodeStream(fileInputStream);
-            holder.movieImgView.setImageBitmap(imageBitMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     private void populateWithOutNetwork(MovieRecViewHolder holder, int position) {
         if(!order.equals("Favorites")) {
             Picasso.with(context).load(imageDataList.get(position).getImageURL()).networkPolicy(NetworkPolicy.OFFLINE).into(holder.movieImgView);
-            Log.d("Restoring", "---- NOT FAV ---- RESTORING ----");
         } else {
             try {
                 FileInputStream fileInputStream = context.openFileInput(imageDataList.get(position).getImageName());
