@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Movie;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -48,11 +50,17 @@ public class MovieRecViewAdapter extends RecyclerView.Adapter<MovieRecViewAdapte
 
     @Override
     public void onBindViewHolder(MovieRecViewHolder holder, int position) {
-        if(isNetwork) {
+        if(isNetworkOn()) {
             populateWithNetwork(holder, position);
         } else {
             populateWithOutNetwork(holder, position);
         }
+    }
+
+    private boolean isNetworkOn() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnected();
     }
 
     @Override
@@ -86,6 +94,7 @@ public class MovieRecViewAdapter extends RecyclerView.Adapter<MovieRecViewAdapte
     private void populateWithOutNetwork(MovieRecViewHolder holder, int position) {
         if(!order.equals("Favorites")) {
             Picasso.with(context).load(imageDataList.get(position).getImageURL()).networkPolicy(NetworkPolicy.OFFLINE).into(holder.movieImgView);
+            Log.d("Restoring", "---- NOT FAV ---- RESTORING ----");
         } else {
             try {
                 FileInputStream fileInputStream = context.openFileInput(imageDataList.get(position).getImageName());
